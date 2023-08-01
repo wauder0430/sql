@@ -458,3 +458,118 @@ FROM     member0530 a
          ON       a.midx = b.midx
 GROUP BY a.memberaddr;
 
+-- 조건에 맞는 도서와 저자 리스트 출력하기
+SELECT * FROM BOOK;
+SELECT BOOK_ID, B.AUTHOR_NAME, SUBSTR(A.PUBLISHED_DATE,1,10) AS PUBLISHED_DATE
+FROM BOOK A JOIN AUTHOR B ON A.AUTHOR_ID = B.AUTHOR_ID
+WHERE A.CATEGORY = '경제'
+ORDER BY A.PUBLISHED_DATE;
+
+-- 있었는데요 없었습니다
+SELECT  A.ANIMAL_ID, A.NAME
+FROM ANIMAL_INS A
+JOIN ANIMAL_OUTS B ON A.ANIMAL_ID = B.ANIMAL_ID
+WHERE B.DATETIME < A.DATETIME
+ORDER BY A.DATETIME;
+
+-- 보호소에서 중성화한 동물
+SELECT A.ANIMAL_ID, A.ANIMAL_TYPE, A.NAME
+FROM ANIMAL_INS A
+JOIN ANIMAL_OUTS B ON A.ANIMAL_ID = B.ANIMAL_ID
+WHERE A.SEX_UPON_INTAKE LIKE '%Intact%' AND (B.SEX_UPON_OUTCOME LIKE '%Spayed%' OR B.SEX_UPON_OUTCOME LIKE '%Neutered%')
+ORDER BY ANIMAL_ID;
+
+select * from board0530;
+select * from member0530;
+
+-- left outer join (공통된 데이터중에 왼쪽에 있는 모든 데이터)
+-- 회원들 중에 게시글을 쓴 개수를 출력하시오
+select * from member0530 a left outer join board0530 b on a.midx = b.midx;
+
+select a.membername,count(bidx) from member0530 a left outer join board0530 b on a.midx = b.midx group by a.membername;
+
+-- 회원정보 테이블과 게시판 테이블에서 나이별(10대~50대 그외 )로 게시물을 쓴 사람들의 인원수를 출력하시오
+
+select * from member0530 a left join board0530 b on a.midx = b.midx;
+
+select year(now())-substr(a.memberbirth,1,4) from member0530 a left join board0530 b on a.midx = b.midx;
+
+SELECT   SUBSTR(YEAR(now())-SUBSTR(a.memberbirth,1,4),1,1),
+         COUNT(bidx)
+FROM     member0530 a
+         LEFT JOIN board0530 b
+         ON       a.midx = b.midx
+GROUP BY SUBSTR(YEAR(now())-SUBSTR(a.memberbirth,1,4),1,1);
+
+SELECT
+         CASE(SUBSTR(YEAR(now())-SUBSTR(a.memberbirth,1,4),1,1))
+                  WHEN 2
+                  THEN '20대'
+                  WHEN 3
+                  THEN '30대'
+                  ELSE '그외'
+         END ,
+         COUNT(bidx)
+FROM     member0530 a
+         LEFT JOIN board0530 b
+         ON       a.midx = b.midx
+GROUP BY
+         CASE(SUBSTR(YEAR(now())-SUBSTR(a.memberbirth,1,4),1,1))
+                  WHEN 2
+                  THEN '20대'
+                  WHEN 3
+                  THEN '30대'
+                  ELSE '그외'
+         END;
+
+-- 게시글을 쓴 사람들중에 성별 비율을 나타내서 출력하시오
+select * from member0530 a left join board0530 b on a.midx = b.midx;
+SELECT
+         CASE a.membergender
+                  WHEN 'F'
+                  THEN '여성'
+                  WHEN 'M'
+                  THEN '남성'
+         END AS '성별',
+         COUNT(a.membergender)/
+         (SELECT COUNT(*)
+         FROM board0530
+         )
+         AS '비율'
+FROM     member0530 a
+         inner JOIN board0530 b
+         ON       a.midx = b.midx
+GROUP BY
+         CASE a.membergender
+                  WHEN 'F'
+                  THEN '여성'
+                  WHEN 'M'
+                  THEN '남성'
+         END;
+
+SELECT
+COUNT(IF(membergender = 'M',1,NULL))/10,
+COUNT(IF(membergender = 'F',1,NULL))/10
+FROM member0530 a
+       left JOIN board0530 b
+       ON     a.midx = b.midx;
+
+select
+sum(if(a.membergender='M',1,0))/count(a.midx),
+sum(if(a.membergender='F',1,0))/count(a.midx)
+from member0530 a inner join board0530 b on a.midx=b.midx;
+
+-- 임시테이블 사용 with
+with memberCnt as(
+select count(midx) as cnt from member0530
+)
+select
+sum(if(a.membergender='M',1,0))/(select cnt from memberCnt),
+sum(if(a.membergender='F',1,0))/(select cnt from memberCnt)
+from member0530 a inner join board0530 b on a.midx=b.midx;
+
+-- 가상테이블 view / union all
+
+-- update delete
+
+-- 계층형 게시판 테이블 형식
